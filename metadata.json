@@ -1,0 +1,6 @@
+{
+  "name": "Coway Health App",
+  "description": "Portal resmi Coway Health Planner Indonesia untuk water purifier, air purifier, simulasi rental Rupiah, konsultasi seller, dan penerbitan surat registrasi order resmi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
