@@ -4,10 +4,10 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy dependency configuration
-COPY package*.json .npmrc ./
+COPY package*.json .npmrc* ./
 
 # Install all dependencies for frontend build
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy source code and build production assets
 COPY . .
@@ -21,9 +21,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Copy package specs and install production dependencies
-COPY package*.json .npmrc ./
-RUN npm install --omit=dev
+# Copy package specs and install dependencies
+COPY package*.json .npmrc* ./
+RUN npm install --legacy-peer-deps
 
 # Copy compiled frontend assets and server entrypoint
 COPY --from=builder /app/dist ./dist

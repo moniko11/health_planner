@@ -4,17 +4,45 @@
 
 # Coway Health App Indonesia
 
-A modern, interactive web portal for Coway Health Planner & Cody services in Indonesia, featuring water and air purifier catalogs, rental calculators in Indonesian Rupiah (IDR), customer registration generator, and direct WhatsApp seller consultation.
+Portal resmi Coway Health Planner & Cody Indonesia untuk pemurni air (Water Purifier), pemurni udara (Air Purifier), kalkulator hidrasi harian, simulasi cicilan rental dalam Rupiah (IDR), dan generator surat pemesanan online.
 
 ---
 
-## 🚀 Deploying to Google Cloud Run
+## 🚀 Panduan Deployment ke Google Cloud Run
 
-This project includes a production-ready **`Dockerfile`**, **`.dockerignore`**, and **`server.ts`** configured specifically for Google Cloud Run (listening on `PORT=8080`, binding to `0.0.0.0`, with health check `/health` and SPA fallback routing).
+Proyek ini telah dilengkapi dengan **`Dockerfile`**, **`cloudbuild.yaml`**, **`.npmrc`**, dan **`server.ts`** siap pakai untuk Google Cloud Run.
 
-### Method 1: Deploy Directly from Source (Recommended)
+### Solusi untuk Error Status 51 (Universal Builder / Buildpack)
+Error `step exited with non-zero status: 51` terjadi ketika Google Cloud Build menjalankan universal buildpack standar yang melewatkan dependensi build (`devDependencies`).
 
-Run the following command in your terminal using the Google Cloud CLI (`gcloud`):
+Kami telah memperbaikinya dengan:
+1. Memindahkan seluruh dependensi build (`vite`, `tailwindcss`, `typescript`, `@types/*`, `esbuild`) ke dalam `dependencies` utama di `package.json`.
+2. Menambahkan konfigurasi `.npmrc` dengan `legacy-peer-deps=true`.
+3. Menambahkan `cloudbuild.yaml` agar Cloud Build otomatis menggunakan **`Dockerfile`**, bukan universal buildpack.
+4. Menghapus file `bun.lock` yang mengganggu auto-detection Google Cloud.
+
+---
+
+### Cara 1: Deploy Langsung Menggunakan Cloud Build (Paling Direkomendasikan)
+
+Gunakan perintah ini agar Google Cloud Build menggunakan `Dockerfile` yang telah dioptimalkan:
+
+```bash
+# Ganti YOUR_PROJECT_ID dengan ID project GCP Anda
+gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/coway-health-app:latest
+
+# Deploy image hasil build ke Cloud Run
+gcloud run deploy coway-health-app \
+  --image gcr.io/YOUR_PROJECT_ID/coway-health-app:latest \
+  --region asia-southeast2 \
+  --platform managed \
+  --port 8080 \
+  --allow-unauthenticated
+```
+
+---
+
+### Cara 2: Deploy dari Source (`gcloud run deploy --source .`)
 
 ```bash
 gcloud run deploy coway-health-app \
@@ -23,63 +51,34 @@ gcloud run deploy coway-health-app \
   --platform managed \
   --allow-unauthenticated
 ```
-*(Note: `asia-southeast2` is the Jakarta, Indonesia region, ideal for Indonesian users)*
 
-### Method 2: Build & Deploy with Docker Image
+---
 
-1. **Build the container image**:
-   ```bash
-   docker build -t gcr.io/YOUR_PROJECT_ID/coway-health-app:latest .
-   ```
-
-2. **Push image to Google Artifact Registry or Container Registry**:
-   ```bash
-   docker push gcr.io/YOUR_PROJECT_ID/coway-health-app:latest
-   ```
-
-3. **Deploy the container to Cloud Run**:
-   ```bash
-   gcloud run deploy coway-health-app \
-     --image gcr.io/YOUR_PROJECT_ID/coway-health-app:latest \
-     --region asia-southeast2 \
-     --platform managed \
-     --port 8080 \
-     --allow-unauthenticated
-   ```
-
-### Method 3: Test the Docker Container Locally
-
-To test the container on your local machine before deploying:
+### Cara 3: Build & Test Lokal dengan Docker
 
 ```bash
-# 1. Build local container
+# 1. Build image lokal
 docker build -t coway-app-local .
 
-# 2. Run container mapped to port 8080
+# 2. Jalankan container
 docker run -p 8080:8080 -e PORT=8080 coway-app-local
 
-# 3. Open in browser
+# 3. Buka browser:
 # http://localhost:8080
 # http://localhost:8080/health
 ```
 
 ---
 
-## 💻 Local Development
+## 💻 Menjalankan di Lingkungan Lokal (Dev)
 
-1. **Install dependencies**:
+1. **Install dependensi**:
    ```bash
-   npm install --legacy-peer-deps
+   npm install
    ```
 
-2. **Run dev server**:
+2. **Jalankan development server**:
    ```bash
    npm run dev
    ```
-   Open `http://localhost:3000`
-
-3. **Build and preview production locally**:
-   ```bash
-   npm run build
-   npm run start
-   ```
+   Aplikasi berjalan di `http://localhost:3000`
