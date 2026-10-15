@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 
 // Serve static assets from dist
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -21,6 +21,7 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-app.listen(port, () => {
-  console.log(`Coway Health App server listening on port ${port}`);
+// Explicitly bind to 0.0.0.0 for Google Cloud Run container networking
+app.listen(Number(port), '0.0.0.0', () => {
+  console.log(`Coway Health App running on http://0.0.0.0:${port}`);
 });

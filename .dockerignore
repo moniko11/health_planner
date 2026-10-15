@@ -3,3 +3,7 @@ dist
 .git
 .github
 .env
+.env.*
+*.log
+npm-debug.log*
+.DS_Store
