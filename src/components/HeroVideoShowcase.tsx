@@ -1,0 +1,592 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Volume2,
+  VolumeX,
+  Maximize2,
+  Sparkles,
+  CheckCircle2,
+  ArrowRight,
+  X,
+  Clock,
+  Droplets,
+  Layers,
+  Flame,
+  Snowflake,
+  ShieldCheck
+} from 'lucide-react';
+
+import cowayNeoKitchenImg from '../assets/images/coway_neo_kitchen_1792265576318.jpg';
+import cowayDispensePourImg from '../assets/images/coway_dispense_pour_1792265590650.jpg';
+import cowayKitchenLifeImg from '../assets/images/coway_kitchen_life_1792265605478.jpg';
+
+interface HeroVideoShowcaseProps {
+  onSelectProduct: (productId: string) => void;
+  onConsultSeller?: () => void;
+}
+
+interface Scene {
+  id: number;
+  timeRange: string;
+  duration: number; // in seconds
+  title: string;
+  subtitle: string;
+  tagline: string;
+  featureBadge: string;
+  image: string;
+  fallback: string;
+  specs: string[];
+}
+
+const SCENES: Scene[] = [
+  {
+    id: 1,
+    timeRange: '00:00 - 00:05',
+    duration: 5,
+    title: 'Desain Minimalis Dapur Modern',
+    subtitle: 'Estetika Elegan Scandinavian di Kitchen Island',
+    tagline: 'Perpaduan sempurna unit Coway Neo Plus dengan interior dapur bersih dan modern.',
+    featureBadge: 'Desain Kompak 26cm',
+    image: cowayNeoKitchenImg,
+    fallback: '/images/coway_neo_kitchen.jpg',
+    specs: ['Bodi ramping modern', 'Bebas tumpahan galon', 'Hemat ruang countertop']
+  },
+  {
+    id: 2,
+    timeRange: '00:05 - 00:10',
+    duration: 5,
+    title: 'Dispenser RO 3 Suhu Instan',
+    subtitle: 'Air Dingin, Panas & Normal Sekali Sentuh',
+    tagline: 'Aliran air RO murni bersertifikasi Halal & WQA Gold Seal dengan kontrol presisi.',
+    featureBadge: '3 Pengaturan Suhu',
+    image: cowayDispensePourImg,
+    fallback: '/images/coway_dispense_pour.jpg',
+    specs: ['Sistem RO 4 Tahap', 'Kunci pengaman air panas', 'Tuas sekali putar']
+  },
+  {
+    id: 3,
+    timeRange: '00:10 - 00:15',
+    duration: 5,
+    title: 'Hidrasi Segar & Higienis Keluarga',
+    subtitle: 'Air Minum Terbaik untuk Tumbuh Kembang Sehat',
+    tagline: 'Tenang dan praktis setiap hari bersama perlindungan servis rutin Cody setiap 4 bulan.',
+    featureBadge: 'Kapasitas Tangki 5.8 Liter',
+    image: cowayKitchenLifeImg,
+    fallback: '/images/coway_kitchen_life.jpg',
+    specs: ['Tangki kedap udara', 'Eco sensor hemat energi', 'Gratis ganti filter 5 thn']
+  }
+];
+
+export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
+  onSelectProduct,
+  onConsultSeller
+}) => {
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [currentSeconds, setCurrentSeconds] = useState<number>(0);
+  const [isMuted, setIsMuted] = useState<boolean>(true);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioIntervalRef = useRef<number | null>(null);
+
+  const TOTAL_DURATION = 15; // 15 seconds promotional video showcase
+
+  // Determine active scene based on current playback second
+  const activeSceneIndex = Math.min(
+    Math.floor((currentSeconds / TOTAL_DURATION) * SCENES.length),
+    SCENES.length - 1
+  );
+  const currentScene = SCENES[activeSceneIndex];
+
+  // Playback timer ticker (runs at ~100ms interval for fluid progress)
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setCurrentSeconds((prev) => {
+          const next = prev + 0.1;
+          if (next >= TOTAL_DURATION) {
+            return 0; // Seamless continuous 15s loop
+          }
+          return next;
+        });
+      }, 100);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  // Ambient sound synthesis using Web Audio API (creates soothing gentle water sound + chime when unmuted)
+  useEffect(() => {
+    if (isMuted) {
+      if (audioIntervalRef.current) {
+        clearInterval(audioIntervalRef.current);
+        audioIntervalRef.current = null;
+      }
+      return;
+    }
+
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioCtx();
+      }
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume();
+      }
+
+      const playGentleChime = () => {
+        if (!audioContextRef.current) return;
+        const ctx = audioContextRef.current;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        // Pleasant high gentle chime simulating pure crystal water droplets
+        const freqs = [523.25, 659.25, 783.99, 1046.5];
+        const randomFreq = freqs[Math.floor(Math.random() * freqs.length)];
+        osc.frequency.setValueAtTime(randomFreq, ctx.currentTime);
+        osc.type = 'sine';
+
+        gain.gain.setValueAtTime(0.015, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 1.2);
+      };
+
+      playGentleChime();
+      audioIntervalRef.current = window.setInterval(playGentleChime, 2500);
+    } catch {
+      // Audio playback blocked or not supported - silent graceful fallback
+    }
+
+    return () => {
+      if (audioIntervalRef.current) {
+        clearInterval(audioIntervalRef.current);
+        audioIntervalRef.current = null;
+      }
+    };
+  }, [isMuted]);
+
+  const handleTogglePlay = () => {
+    setIsPlaying((prev) => !prev);
+  };
+
+  const handleToggleMute = () => {
+    setIsMuted((prev) => !prev);
+  };
+
+  const handleSeekScene = (sceneIndex: number) => {
+    setCurrentSeconds(sceneIndex * 5);
+    setIsPlaying(true);
+  };
+
+  const handleRestart = () => {
+    setCurrentSeconds(0);
+    setIsPlaying(true);
+  };
+
+  // Image fallback handler
+  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>, fallbackUrl: string) => {
+    const target = e.currentTarget;
+    if (!target.dataset.triedPublic) {
+      target.dataset.triedPublic = '1';
+      target.src = fallbackUrl;
+    }
+  };
+
+  const progressPercent = Math.min((currentSeconds / TOTAL_DURATION) * 100, 100);
+  const formattedTime = `00:${Math.floor(currentSeconds).toString().padStart(2, '0')}`;
+
+  return (
+    <>
+      <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-sky-300/80 bg-slate-950 group select-none">
+        {/* Main 16:9 Video Canvas Frame */}
+        <div className="relative w-full aspect-16/10 sm:aspect-16/11 overflow-hidden bg-slate-900">
+          {/* Visual Scene Transitions with Cinematic Pan effect */}
+          {SCENES.map((scene, idx) => {
+            const isActive = idx === activeSceneIndex;
+            return (
+              <div
+                key={scene.id}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                  isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                }`}
+              >
+                <img
+                  src={scene.image}
+                  alt={scene.title}
+                  onError={(e) => handleImgError(e, scene.fallback)}
+                  className={`w-full h-full object-cover object-center transition-transform duration-7000 ease-linear ${
+                    isActive && isPlaying ? 'scale-105' : 'scale-100'
+                  }`}
+                />
+              </div>
+            );
+          })}
+
+          {/* Cinematic Vignette & Lighting Gradients */}
+          <div className="absolute inset-0 z-20 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-slate-950/60 pointer-events-none" />
+
+          {/* Top Video Header Overlay */}
+          <div className="absolute top-0 inset-x-0 z-30 p-4 sm:p-5 flex items-center justify-between text-white">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-600/90 text-[11px] font-bold tracking-wider uppercase text-white shadow-md backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                15s Video Promo
+              </span>
+              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/15 text-[11px] text-sky-200">
+                <Sparkles className="w-3 h-3 text-sky-400" />
+                Coway Neo Plus di Dapur Modern
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Sound Toggle */}
+              <button
+                type="button"
+                onClick={handleToggleMute}
+                title={isMuted ? 'Aktifkan Suara Suasana Air' : 'Bisukan Suara'}
+                className="p-2 rounded-xl bg-black/50 hover:bg-black/70 border border-white/20 text-white backdrop-blur-md transition-colors cursor-pointer"
+              >
+                {isMuted ? <VolumeX className="w-4 h-4 text-slate-300" /> : <Volume2 className="w-4 h-4 text-emerald-400 animate-pulse" />}
+              </button>
+
+              {/* Theater Fullscreen Expand */}
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                title="Buka Video Layar Penuh"
+                className="p-2 rounded-xl bg-black/50 hover:bg-black/70 border border-white/20 text-white backdrop-blur-md transition-colors cursor-pointer"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Central Play/Pause Floating Action Button */}
+          <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+            <button
+              type="button"
+              onClick={handleTogglePlay}
+              className={`p-4 rounded-full bg-sky-600/90 hover:bg-sky-500 text-white shadow-2xl backdrop-blur-md pointer-events-auto transform transition-all hover:scale-110 active:scale-95 border-2 border-white/40 cursor-pointer ${
+                isPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100 scale-105'
+              }`}
+            >
+              {isPlaying ? <Pause className="w-6 h-6 fill-white" /> : <Play className="w-6 h-6 fill-white ml-0.5" />}
+            </button>
+          </div>
+
+          {/* Bottom Video Info & Dynamic Captions */}
+          <div className="absolute bottom-12 inset-x-0 z-30 px-4 sm:px-6 text-white pointer-events-none">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-sky-600/80 text-[11px] font-semibold tracking-wide text-white mb-1 shadow-xs">
+              <span>Scene 0{currentScene.id} / 03</span>
+              <span className="text-sky-200">•</span>
+              <span>{currentScene.featureBadge}</span>
+            </div>
+            <h3 className="text-base sm:text-lg font-bold font-display text-white tracking-tight drop-shadow-md">
+              {currentScene.title}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-200 line-clamp-1 drop-shadow-sm mt-0.5">
+              {currentScene.tagline}
+            </p>
+          </div>
+
+          {/* Timeline & Player Bar */}
+          <div className="absolute bottom-0 inset-x-0 z-30 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-3 sm:px-4 sm:pb-3 pt-4">
+            {/* Segmented Timeline Progress */}
+            <div className="flex items-center gap-1.5 mb-2.5">
+              {SCENES.map((s, idx) => {
+                const isPast = idx < activeSceneIndex;
+                const isCurrent = idx === activeSceneIndex;
+                const sceneProgress = isCurrent
+                  ? ((currentSeconds - idx * 5) / 5) * 100
+                  : isPast
+                  ? 100
+                  : 0;
+
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => handleSeekScene(idx)}
+                    className="flex-1 h-1.5 bg-white/20 hover:bg-white/35 rounded-full overflow-hidden relative cursor-pointer transition-colors"
+                    title={`Lompat ke Scene ${s.id}: ${s.title}`}
+                  >
+                    <div
+                      className="h-full bg-gradient-to-r from-sky-400 to-sky-300 transition-all duration-100 ease-linear rounded-full"
+                      style={{ width: `${Math.min(100, Math.max(0, sceneProgress))}%` }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Bottom Controls Strip */}
+            <div className="flex items-center justify-between text-xs text-white">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={handleTogglePlay}
+                  className="flex items-center gap-1.5 text-white hover:text-sky-300 font-medium cursor-pointer"
+                >
+                  {isPlaying ? (
+                    <>
+                      <Pause className="w-3.5 h-3.5 fill-current" />
+                      <span className="hidden sm:inline">Jeda</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span className="hidden sm:inline">Putar</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRestart}
+                  className="p-1 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  title="Ulang dari awal"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[11px] font-mono text-sky-200">
+                  {formattedTime} / 00:{TOTAL_DURATION}
+                </span>
+              </div>
+
+              {/* Scene Quick Pickers */}
+              <div className="hidden sm:flex items-center gap-1 text-[11px]">
+                {SCENES.map((scene, idx) => (
+                  <button
+                    key={scene.id}
+                    type="button"
+                    onClick={() => handleSeekScene(idx)}
+                    className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                      idx === activeSceneIndex
+                        ? 'bg-sky-500/80 text-white font-semibold'
+                        : 'text-slate-300 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    0{scene.id}
+                  </button>
+                ))}
+              </div>
+
+              {/* Quick Order Action */}
+              <button
+                type="button"
+                onClick={() => onSelectProduct('neo-plus')}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-semibold text-[11px] shadow-sm transition-all cursor-pointer"
+              >
+                <span>Pesan Neo Plus</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Banner Details in Hero Card */}
+        <div className="bg-slate-900 border-t border-white/10 p-4 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-wider font-semibold text-sky-400">
+                  Produk Terpopuler #1
+                </span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-950 text-sky-300 border border-sky-700/60 font-semibold">
+                  Sewa Beli
+                </span>
+              </div>
+              <h4 className="text-base font-bold font-display text-white mt-0.5">
+                Coway Neo Plus CHP-264L
+              </h4>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Sistem RO 3 Suhu: Panas, Dingin & Normal • Bebas Angkat Galon
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-slate-400 line-through">Rp 320.000/bln</div>
+              <div className="text-lg sm:text-xl font-extrabold text-white font-display tabular-nums">
+                Rp 250.000<span className="text-xs font-normal text-slate-300">/bln</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="text-slate-300 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-sky-400" />
+              Gratis Servis & Filter Cody Berkala 5 Tahun
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="text-sky-300 hover:text-white font-medium flex items-center gap-1 cursor-pointer"
+              >
+                Detail Video & Spek &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Fullscreen Cinematic Theater Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/90 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-4xl bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-sky-500/30">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 bg-slate-950/70">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                  <Play className="w-4 h-4 fill-sky-400" />
+                </span>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-white font-display">
+                    Video Promosi Coway Neo Plus (15 Detik)
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Showcase Eksklusif Desain Dapur Modern & Kualitas Pemurnian Air RO
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Video Player View */}
+            <div className="relative aspect-16/9 w-full bg-black overflow-hidden">
+              <img
+                src={currentScene.image}
+                alt={currentScene.title}
+                onError={(e) => handleImgError(e, currentScene.fallback)}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-transparent to-black/60" />
+
+              {/* Central Large Play/Pause */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={handleTogglePlay}
+                  className="p-5 rounded-full bg-sky-600/90 hover:bg-sky-500 text-white shadow-2xl backdrop-blur-md transition-all hover:scale-110 cursor-pointer border border-white/30"
+                >
+                  {isPlaying ? <Pause className="w-7 h-7 fill-white" /> : <Play className="w-7 h-7 fill-white ml-1" />}
+                </button>
+              </div>
+
+              {/* Progress and Caption in Modal */}
+              <div className="absolute bottom-0 inset-x-0 p-5 bg-gradient-to-t from-black via-black/80 to-transparent">
+                <div className="flex items-center gap-2 mb-3">
+                  {SCENES.map((s, idx) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => handleSeekScene(idx)}
+                      className={`flex-1 py-1.5 px-3 rounded-lg text-left text-xs transition-colors cursor-pointer ${
+                        idx === activeSceneIndex
+                          ? 'bg-sky-600 text-white font-semibold shadow-sm'
+                          : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                      }`}
+                    >
+                      <div className="text-[10px] uppercase tracking-wider text-sky-200">Scene 0{s.id}</div>
+                      <div className="truncate font-medium">{s.title}</div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-300">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-sky-300">{formattedTime} / 00:{TOTAL_DURATION}</span>
+                    <span>•</span>
+                    <span className="text-white font-medium">{currentScene.subtitle}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleToggleMute}
+                    className="flex items-center gap-1.5 text-xs text-sky-300 hover:text-white cursor-pointer"
+                  >
+                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+                    <span>{isMuted ? 'Aktifkan Suara' : 'Suara Aktif'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Highlights & Direct CTA */}
+            <div className="p-5 sm:p-6 bg-slate-900 grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-white/10">
+              <div className="p-3.5 rounded-xl bg-slate-800/80 border border-white/5">
+                <div className="flex items-center gap-2 text-sky-400 font-semibold text-xs mb-1">
+                  <Snowflake className="w-4 h-4" />
+                  <span>Air Dingin 2.3 Liter</span>
+                </div>
+                <p className="text-xs text-slate-300">
+                  Segar seketika kapan pun tanpa perlu es batu atau menunggu lemari es.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-800/80 border border-white/5">
+                <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs mb-1">
+                  <Flame className="w-4 h-4" />
+                  <span>Air Panas 1.0 Liter</span>
+                </div>
+                <p className="text-xs text-slate-300">
+                  Suhu 90°C siap seduh kopi, teh, dan susu formula dengan child safety lock.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-800/80 border border-white/5">
+                <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs mb-1">
+                  <Droplets className="w-4 h-4" />
+                  <span>Air Normal 2.5 Liter</span>
+                </div>
+                <p className="text-xs text-slate-300">
+                  Total tangki 5.8 Liter kedap udara menjaga kemurnian dari debu dan bakteri.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="p-4 sm:p-5 bg-slate-950 flex flex-wrap items-center justify-between gap-3 border-t border-white/10">
+              <div className="text-xs text-slate-400">
+                Promo Bulanan: <strong className="text-white text-sm">Rp 250.000/bln</strong> (Bebas Biaya Registrasi & Pemasangan)
+              </div>
+              <div className="flex items-center gap-2.5">
+                {onConsultSeller && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      onConsultSeller();
+                    }}
+                    className="px-4 py-2.5 rounded-xl border border-sky-400/40 text-sky-300 hover:bg-sky-500/10 text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Konsultasi Produk
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    onSelectProduct('neo-plus');
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Daftar Order Neo Plus</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};

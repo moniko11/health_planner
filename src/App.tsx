@@ -35,6 +35,7 @@ import cowayHeroImg from './assets/images/coway_hero_purifier_1791998277313.jpg'
 import cowayAirImg from './assets/images/coway_air_purifier_1791998277782.jpg';
 import cowayManPlannerImg from './assets/images/coway_man_planner_1792264873723.jpg';
 import cowayMattressImg from './assets/images/coway_prime_mattress_1792264888320.jpg';
+import { HeroVideoShowcase } from './components/HeroVideoShowcase';
 
 // Graceful fallback handler for Cloud Run container hosting & network resilience
 const handleImageError = (
@@ -550,50 +551,15 @@ export default function App() {
               </div>
             </div>
 
-            {/* Right Column: Hero Visual Appliance with Quality Badge */}
+            {/* Right Column: 15-Second Promotional Video Showcase & Verified Seller Badge */}
             <div className="lg:col-span-5 relative">
-              <div className="relative rounded-2xl overflow-hidden shadow-xl border border-sky-200 bg-white">
-                <img
-                  src={cowayHeroImg}
-                  alt="Coway Smart Purifier Countertop Water Dispenser"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => handleImageError(e, 'water')}
-                  className="w-full h-80 sm:h-96 object-cover object-center"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent flex flex-col justify-end p-5 sm:p-6 text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs uppercase tracking-wider font-semibold text-sky-300">
-                        Produk Terpopuler #1
-                      </span>
-                      <h3 className="text-lg font-bold font-display mt-0.5">
-                        Coway Neo Plus CHP-264L
-                      </h3>
-                      <p className="text-xs text-slate-200 mt-0.5">
-                        Sistem RO 3 Suhu: Normal, Dingin & Panas
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-sky-200 line-through">Rp 320.000/bln</div>
-                      <div className="text-xl font-extrabold text-white font-display tabular-nums">
-                        Rp 250.000<span className="text-xs font-normal">/bln</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between text-xs text-slate-200">
-                    <span>Termasuk Gratis Servis Cody 5 Tahun</span>
-                    <button
-                      onClick={() => handleSelectProduct('neo-plus')}
-                      className="text-sky-300 hover:text-white font-medium flex items-center gap-1 cursor-pointer"
-                    >
-                      Daftar Langsung &rarr;
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <HeroVideoShowcase
+                onSelectProduct={handleSelectProduct}
+                onConsultSeller={() => contactSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+              />
 
               {/* Floating Verified Seller Card */}
-              <div className="absolute -bottom-6 -left-4 sm:left-4 bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-lg border border-sky-100 flex items-center gap-3 max-w-xs">
+              <div className="absolute -bottom-6 -left-4 sm:left-4 z-40 bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-lg border border-sky-100 flex items-center gap-3 max-w-xs">
                 <img
                   src={cowayManPlannerImg}
                   alt="Coway Health Planner Moniko Martiano"
