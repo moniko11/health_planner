@@ -25,9 +25,11 @@ ENV PORT=8080
 COPY package*.json .npmrc* ./
 RUN npm install --legacy-peer-deps
 
-# Copy compiled frontend assets and server entrypoint
+# Copy compiled frontend assets, server entrypoint, and image directories
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server.ts ./server.ts
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/src/assets ./src/assets
 
 # Cloud Run listens on port 8080
 EXPOSE 8080
