@@ -31,27 +31,30 @@ import {
 } from 'lucide-react';
 
 // Production-ready static image imports (processed and hashed by Vite)
-import cowayHeroImg from 'assets/images/coway_hero_purifier_1791998277313.jpg';
-import cowayAirImg from 'assets/images/coway_air_purifier_1791998277782.jpg';
-import cowayCodyImg from 'assets/images/coway_cody_specialist_1791998277853.jpg';
+import cowayHeroImg from './assets/images/coway_hero_purifier_1791998277313.jpg';
+import cowayAirImg from './assets/images/coway_air_purifier_1791998277782.jpg';
+import cowayManPlannerImg from './assets/images/coway_man_planner_1792264873723.jpg';
+import cowayMattressImg from './assets/images/coway_prime_mattress_1792264888320.jpg';
 
 // Graceful fallback handler for Cloud Run container hosting & network resilience
 const handleImageError = (
   e: React.SyntheticEvent<HTMLImageElement, Event>,
-  category: 'water' | 'air' | 'specialist' = 'water'
+  category: 'water' | 'air' | 'specialist' | 'mattress' = 'water'
 ) => {
   const target = e.currentTarget;
   if (!target.dataset.triedPublic) {
     target.dataset.triedPublic = '1';
-    if (category === 'air') target.src = 'assets/images/coway_air_purifier.jpg';
-    else if (category === 'specialist') target.src = 'assets/images/coway_cody_specialist.jpg';
-    else target.src = 'assets/images/coway_hero_purifier.jpg';
+    if (category === 'air') target.src = '/images/coway_air_purifier.jpg';
+    else if (category === 'specialist') target.src = '/images/coway_man_planner.jpg';
+    else if (category === 'mattress') target.src = '/images/coway_prime_mattress.jpg';
+    else target.src = '/images/coway_hero_purifier.jpg';
     return;
   }
   if (!target.dataset.triedAssets) {
     target.dataset.triedAssets = '1';
     if (category === 'air') target.src = '/assets/images/coway_air_purifier_1791998277782.jpg';
-    else if (category === 'specialist') target.src = '/assets/images/coway_cody_specialist_1791998277853.jpg';
+    else if (category === 'specialist') target.src = '/assets/images/coway_man_planner_1792264873723.jpg';
+    else if (category === 'mattress') target.src = '/assets/images/coway_prime_mattress_1792264888320.jpg';
     else target.src = '/assets/images/coway_hero_purifier_1791998277313.jpg';
     return;
   }
@@ -60,7 +63,9 @@ const handleImageError = (
     if (category === 'air') {
       target.src = 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=800&q=80';
     } else if (category === 'specialist') {
-      target.src = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80';
+      target.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80';
+    } else if (category === 'mattress') {
+      target.src = 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80';
     } else {
       target.src = 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&w=800&q=80';
     }
@@ -206,7 +211,7 @@ const PRODUCTS: CowayProduct[] = [
     ],
     dimensions: 'Standar Queen / King',
     power: 'Bebas Radiasi Listrik / Zero EMF',
-    image: cowayCodyImg
+    image: cowayMattressImg
   }
 ];
 
@@ -590,8 +595,8 @@ export default function App() {
               {/* Floating Verified Seller Card */}
               <div className="absolute -bottom-6 -left-4 sm:left-4 bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-lg border border-sky-100 flex items-center gap-3 max-w-xs">
                 <img
-                  src={cowayCodyImg}
-                  alt="Coway Health Planner Moniko"
+                  src={cowayManPlannerImg}
+                  alt="Coway Health Planner Moniko Martiano"
                   onError={(e) => handleImageError(e, 'specialist')}
                   className="w-12 h-12 rounded-lg object-cover border border-sky-200 shrink-0"
                 />
@@ -1434,8 +1439,8 @@ export default function App() {
                 </p>
                 <div className="flex items-center gap-2">
                   <img
-                    src={cowayCodyImg}
-                    alt="Seller Cody"
+                    src={cowayManPlannerImg}
+                    alt="Seller Moniko Martiano"
                     onError={(e) => handleImageError(e, 'specialist')}
                     className="w-9 h-9 rounded-full object-cover border border-sky-300"
                   />
@@ -1462,6 +1467,26 @@ export default function App() {
               <h2 className="text-2xl sm:text-3xl font-bold font-display text-slate-900 tracking-tight">
                 Bingung Memilih Model? Hubungi Moniko Martiano
               </h2>
+
+              {/* Seller Profile Card with Man Image */}
+              <div className="flex items-center gap-3.5 p-3.5 bg-sky-50/70 rounded-2xl border border-sky-100 shadow-xs">
+                <img
+                  src={cowayManPlannerImg}
+                  alt="Moniko Martiano - Coway Health Planner"
+                  onError={(e) => handleImageError(e, 'specialist')}
+                  className="w-16 h-16 rounded-xl object-cover border border-sky-200 shadow-xs shrink-0"
+                />
+                <div>
+                  <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                    <span>Moniko Martiano</span>
+                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" title="Aktif melayani pelanggan" />
+                  </div>
+                  <div className="text-xs text-sky-700 font-medium">Senior Coway Health Planner</div>
+                  <div className="text-[11px] text-slate-500">Official Coway Agent Code: DST260800074</div>
+                  <div className="text-[10px] text-emerald-700 font-semibold mt-0.5">Siap Konsultasi & Pemasangan Cepat</div>
+                </div>
+              </div>
+
               <p className="text-slate-600 text-sm leading-relaxed">
                 Sebagai Coway Health Planner berlisensi, saya siap memberikan saran terbaik sesuai jumlah keluarga, kondisi air baku di rumah Anda, dan budget bulanan yang diinginkan.
               </p>
