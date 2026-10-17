@@ -30,6 +30,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server.ts ./server.ts
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/src/assets ./src/assets
+COPY --from=builder /app/scripts ./scripts
 
 # Cloud Run listens on port 8080
 EXPOSE 8080

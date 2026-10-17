@@ -196,6 +196,12 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
     if (!target.dataset.triedPublic) {
       target.dataset.triedPublic = '1';
       target.src = fallbackUrl;
+    } else if (!target.dataset.triedAssets) {
+      target.dataset.triedAssets = '1';
+      target.src = fallbackUrl.replace('/images/', '/assets/images/');
+    } else if (!target.dataset.triedRoot) {
+      target.dataset.triedRoot = '1';
+      target.src = fallbackUrl.replace('/images/', '/');
     }
   };
 

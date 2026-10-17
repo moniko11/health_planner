@@ -53,10 +53,18 @@ const handleImageError = (
   }
   if (!target.dataset.triedAssets) {
     target.dataset.triedAssets = '1';
-    if (category === 'air') target.src = '/assets/images/coway_air_purifier_1791998277782.jpg';
-    else if (category === 'specialist') target.src = '/assets/images/coway_man_planner_1792264873723.jpg';
-    else if (category === 'mattress') target.src = '/assets/images/coway_prime_mattress_1792264888320.jpg';
-    else target.src = '/assets/images/coway_hero_purifier_1791998277313.jpg';
+    if (category === 'air') target.src = '/assets/images/coway_air_purifier.jpg';
+    else if (category === 'specialist') target.src = '/assets/images/coway_man_planner.jpg';
+    else if (category === 'mattress') target.src = '/assets/images/coway_prime_mattress.jpg';
+    else target.src = '/assets/images/coway_hero_purifier.jpg';
+    return;
+  }
+  if (!target.dataset.triedDirect) {
+    target.dataset.triedDirect = '1';
+    if (category === 'air') target.src = '/coway_air_purifier.jpg';
+    else if (category === 'specialist') target.src = '/coway_man_planner.jpg';
+    else if (category === 'mattress') target.src = '/coway_prime_mattress.jpg';
+    else target.src = '/coway_hero_purifier.jpg';
     return;
   }
   if (!target.dataset.triedCdn) {
