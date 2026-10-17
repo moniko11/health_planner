@@ -15,12 +15,14 @@ import {
   Layers,
   Flame,
   Snowflake,
-  ShieldCheck
+  ShieldCheck,
+  Music
 } from 'lucide-react';
 
 import cowayNeoKitchenImg from '../assets/images/coway_neo_kitchen_1792265576318.jpg';
 import cowayDispensePourImg from '../assets/images/coway_dispense_pour_1792265590650.jpg';
 import cowayKitchenLifeImg from '../assets/images/coway_kitchen_life_1792265605478.jpg';
+import cowayPromoBgm from '../assets/audio/coway_promo_bgm.mp3';
 
 interface HeroVideoShowcaseProps {
   onSelectProduct: (productId: string) => void;
@@ -87,8 +89,7 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
   const [currentSeconds, setCurrentSeconds] = useState<number>(0);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const audioIntervalRef = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const TOTAL_DURATION = 15; // 15 seconds promotional video showcase
 
@@ -107,85 +108,86 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
         setCurrentSeconds((prev) => {
           const next = prev + 0.1;
           if (next >= TOTAL_DURATION) {
-            return 0; // Seamless continuous 15s loop
+            // Seamless loop restart
+            if (audioRef.current && !isMuted) {
+              audioRef.current.currentTime = 0;
+            }
+            return 0;
           }
           return next;
         });
       }, 100);
     }
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, isMuted]);
 
-  // Ambient sound synthesis using Web Audio API (creates soothing gentle water sound + chime when unmuted)
+  // Synchronize audio playback with isPlaying and isMuted states
   useEffect(() => {
-    if (isMuted) {
-      if (audioIntervalRef.current) {
-        clearInterval(audioIntervalRef.current);
-        audioIntervalRef.current = null;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!isMuted && isPlaying) {
+      if (Math.abs(audio.currentTime - (currentSeconds % TOTAL_DURATION)) > 0.5) {
+        audio.currentTime = currentSeconds % TOTAL_DURATION;
       }
-      return;
+      audio.play().catch(() => {
+        // Browser autoplay policy might require direct interaction
+      });
+    } else {
+      audio.pause();
     }
-
-    try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!audioContextRef.current) {
-        audioContextRef.current = new AudioCtx();
-      }
-      if (audioContextRef.current.state === 'suspended') {
-        audioContextRef.current.resume();
-      }
-
-      const playGentleChime = () => {
-        if (!audioContextRef.current) return;
-        const ctx = audioContextRef.current;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        // Pleasant high gentle chime simulating pure crystal water droplets
-        const freqs = [523.25, 659.25, 783.99, 1046.5];
-        const randomFreq = freqs[Math.floor(Math.random() * freqs.length)];
-        osc.frequency.setValueAtTime(randomFreq, ctx.currentTime);
-        osc.type = 'sine';
-
-        gain.gain.setValueAtTime(0.015, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 1.2);
-      };
-
-      playGentleChime();
-      audioIntervalRef.current = window.setInterval(playGentleChime, 2500);
-    } catch {
-      // Audio playback blocked or not supported - silent graceful fallback
-    }
-
-    return () => {
-      if (audioIntervalRef.current) {
-        clearInterval(audioIntervalRef.current);
-        audioIntervalRef.current = null;
-      }
-    };
-  }, [isMuted]);
+  }, [isPlaying, isMuted]);
 
   const handleTogglePlay = () => {
-    setIsPlaying((prev) => !prev);
+    setIsPlaying((prev) => {
+      const nextPlaying = !prev;
+      if (audioRef.current) {
+        if (nextPlaying && !isMuted) {
+          audioRef.current.play().catch(() => {});
+        } else {
+          audioRef.current.pause();
+        }
+      }
+      return nextPlaying;
+    });
   };
 
   const handleToggleMute = () => {
-    setIsMuted((prev) => !prev);
+    setIsMuted((prev) => {
+      const nextMuted = !prev;
+      if (audioRef.current) {
+        if (!nextMuted) {
+          audioRef.current.currentTime = currentSeconds % TOTAL_DURATION;
+          audioRef.current.play().catch(() => {});
+        } else {
+          audioRef.current.pause();
+        }
+      }
+      return nextMuted;
+    });
   };
 
   const handleSeekScene = (sceneIndex: number) => {
-    setCurrentSeconds(sceneIndex * 5);
+    const targetSeconds = sceneIndex * 5;
+    setCurrentSeconds(targetSeconds);
     setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.currentTime = targetSeconds;
+      if (!isMuted) {
+        audioRef.current.play().catch(() => {});
+      }
+    }
   };
 
   const handleRestart = () => {
     setCurrentSeconds(0);
     setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      if (!isMuted) {
+        audioRef.current.play().catch(() => {});
+      }
+    }
   };
 
   // Image fallback handler
@@ -202,6 +204,21 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
 
   return (
     <>
+      {/* Background Music Audio Element */}
+      <audio
+        ref={audioRef}
+        src={cowayPromoBgm}
+        preload="auto"
+        loop
+        onError={(e) => {
+          const el = e.currentTarget;
+          if (!el.dataset.triedPublic) {
+            el.dataset.triedPublic = '1';
+            el.src = '/audio/coway_promo_bgm.mp3';
+          }
+        }}
+      />
+
       <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-sky-300/80 bg-slate-950 group select-none">
         {/* Main 16:9 Video Canvas Frame */}
         <div className="relative w-full aspect-16/10 sm:aspect-16/11 overflow-hidden bg-slate-900">
@@ -231,27 +248,43 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
           <div className="absolute inset-0 z-20 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-slate-950/60 pointer-events-none" />
 
           {/* Top Video Header Overlay */}
-          <div className="absolute top-0 inset-x-0 z-30 p-4 sm:p-5 flex items-center justify-between text-white">
+          <div className="absolute top-0 inset-x-0 z-30 p-3.5 sm:p-5 flex items-center justify-between text-white">
             <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-600/90 text-[11px] font-bold tracking-wider uppercase text-white shadow-md backdrop-blur-md">
-                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                15s Video Promo
-              </span>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/15 text-[11px] text-sky-200">
-                <Sparkles className="w-3 h-3 text-sky-400" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-950/70 backdrop-blur-md border border-white/20 text-xs font-semibold text-sky-200 shadow-md">
+                <Sparkles className="w-3.5 h-3.5 text-sky-400" />
                 Coway Neo Plus di Dapur Modern
               </span>
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Sound Toggle */}
+              {/* Catchy Music Toggle Button */}
               <button
                 type="button"
                 onClick={handleToggleMute}
-                title={isMuted ? 'Aktifkan Suara Suasana Air' : 'Bisukan Suara'}
-                className="p-2 rounded-xl bg-black/50 hover:bg-black/70 border border-white/20 text-white backdrop-blur-md transition-colors cursor-pointer"
+                title={isMuted ? 'Nyalakan Musik Video Menarik' : 'Matikan Musik Video'}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs backdrop-blur-md transition-all cursor-pointer ${
+                  !isMuted
+                    ? 'bg-emerald-500/25 hover:bg-emerald-500/35 border-emerald-400/60 text-emerald-300 shadow-lg shadow-emerald-500/20'
+                    : 'bg-black/60 hover:bg-black/80 border-white/20 text-slate-200 hover:text-white'
+                }`}
               >
-                {isMuted ? <VolumeX className="w-4 h-4 text-slate-300" /> : <Volume2 className="w-4 h-4 text-emerald-400 animate-pulse" />}
+                {!isMuted ? (
+                  <>
+                    <Volume2 className="w-4 h-4 text-emerald-400 animate-pulse" />
+                    <span className="hidden sm:inline font-semibold">Musik ON</span>
+                    {/* Animated Music Equalizer Bars */}
+                    <span className="flex items-end gap-0.5 h-3 ml-0.5">
+                      <span className="w-0.5 bg-emerald-400 h-2 animate-bounce" />
+                      <span className="w-0.5 bg-emerald-300 h-3 animate-bounce [animation-delay:150ms]" />
+                      <span className="w-0.5 bg-emerald-400 h-1.5 animate-bounce [animation-delay:300ms]" />
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="w-4 h-4 text-slate-300" />
+                    <span className="hidden sm:inline text-slate-300 font-medium">Nyalakan Musik</span>
+                  </>
+                )}
               </button>
 
               {/* Theater Fullscreen Expand */}
@@ -265,6 +298,20 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Floating 'Nyalakan Musik' Pill (When Muted and Playing) */}
+          {isMuted && isPlaying && (
+            <div className="absolute top-16 right-4 z-30 animate-pulse">
+              <button
+                type="button"
+                onClick={handleToggleMute}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-500/90 to-blue-600/90 hover:from-sky-500 hover:to-blue-500 text-white text-[11px] font-semibold shadow-lg backdrop-blur-md border border-white/30 cursor-pointer transition-transform hover:scale-105"
+              >
+                <Music className="w-3.5 h-3.5 text-white" />
+                <span>Nyalakan Musik 🎵</span>
+              </button>
+            </div>
+          )}
 
           {/* Central Play/Pause Floating Action Button */}
           <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
@@ -445,7 +492,7 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
                 </span>
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-white font-display">
-                    Video Promosi Coway Neo Plus (15 Detik)
+                    Video Promosi Coway Neo Plus
                   </h3>
                   <p className="text-xs text-slate-400">
                     Showcase Eksklusif Desain Dapur Modern & Kualitas Pemurnian Air RO
@@ -511,10 +558,14 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
                   <button
                     type="button"
                     onClick={handleToggleMute}
-                    className="flex items-center gap-1.5 text-xs text-sky-300 hover:text-white cursor-pointer"
+                    className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                      !isMuted
+                        ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300'
+                        : 'bg-white/10 border-white/15 text-slate-300 hover:text-white'
+                    }`}
                   >
-                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
-                    <span>{isMuted ? 'Aktifkan Suara' : 'Suara Aktif'}</span>
+                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-400 animate-pulse" />}
+                    <span>{isMuted ? 'Nyalakan Musik' : 'Musik ON 🎵'}</span>
                   </button>
                 </div>
               </div>

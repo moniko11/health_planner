@@ -551,7 +551,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Right Column: 15-Second Promotional Video Showcase & Verified Seller Badge */}
+            {/* Right Column: Promotional Video Showcase & Verified Seller Badge */}
             <div className="lg:col-span-5 relative">
               <HeroVideoShowcase
                 onSelectProduct={handleSelectProduct}
