@@ -30,6 +30,43 @@ import {
   Phone
 } from 'lucide-react';
 
+// Production-ready static image imports (processed and hashed by Vite)
+import cowayHeroImg from './assets/images/coway_hero_purifier_1791998277313.jpg';
+import cowayAirImg from './assets/images/coway_air_purifier_1791998277782.jpg';
+import cowayCodyImg from './assets/images/coway_cody_specialist_1791998277853.jpg';
+
+// Graceful fallback handler for Cloud Run container hosting & network resilience
+const handleImageError = (
+  e: React.SyntheticEvent<HTMLImageElement, Event>,
+  category: 'water' | 'air' | 'specialist' = 'water'
+) => {
+  const target = e.currentTarget;
+  if (!target.dataset.triedPublic) {
+    target.dataset.triedPublic = '1';
+    if (category === 'air') target.src = '/images/coway_air_purifier.jpg';
+    else if (category === 'specialist') target.src = '/images/coway_cody_specialist.jpg';
+    else target.src = '/images/coway_hero_purifier.jpg';
+    return;
+  }
+  if (!target.dataset.triedAssets) {
+    target.dataset.triedAssets = '1';
+    if (category === 'air') target.src = '/assets/images/coway_air_purifier_1791998277782.jpg';
+    else if (category === 'specialist') target.src = '/assets/images/coway_cody_specialist_1791998277853.jpg';
+    else target.src = '/assets/images/coway_hero_purifier_1791998277313.jpg';
+    return;
+  }
+  if (!target.dataset.triedCdn) {
+    target.dataset.triedCdn = '1';
+    if (category === 'air') {
+      target.src = 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=800&q=80';
+    } else if (category === 'specialist') {
+      target.src = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80';
+    } else {
+      target.src = 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&w=800&q=80';
+    }
+  }
+};
+
 // Product Catalog Data in Indonesian Rupiah (IDR)
 interface CowayProduct {
   id: string;
@@ -68,7 +105,7 @@ const PRODUCTS: CowayProduct[] = [
     dimensions: '260 x 505 x 500 mm',
     power: 'Dingin 0.7A / Panas 300W',
     popular: true,
-    image: '/src/assets/images/coway_hero_purifier_1791998277313.jpg'
+    image: cowayHeroImg
   },
   {
     id: 'ombak',
@@ -88,7 +125,7 @@ const PRODUCTS: CowayProduct[] = [
     ],
     dimensions: '340 x 523 x 518 mm',
     power: 'Dingin 0.6A / Panas 672-800W',
-    image: '/src/assets/images/coway_hero_purifier_1791998277313.jpg'
+    image: cowayHeroImg
   },
   {
     id: 'villaem-2',
@@ -108,7 +145,7 @@ const PRODUCTS: CowayProduct[] = [
     ],
     dimensions: '340 x 523 x 518 mm',
     power: 'Dingin 0.7A / Panas 270-320W',
-    image: '/src/assets/images/coway_hero_purifier_1791998277313.jpg'
+    image: cowayHeroImg
   },
   {
     id: 'storm-air',
@@ -129,7 +166,7 @@ const PRODUCTS: CowayProduct[] = [
     dimensions: '410 x 240 x 765 mm',
     power: '65W Max Inverter Hemat Energi',
     popular: true,
-    image: '/src/assets/images/coway_air_purifier_1791998277782.jpg'
+    image: cowayAirImg
   },
   {
     id: 'noble-air',
@@ -149,7 +186,7 @@ const PRODUCTS: CowayProduct[] = [
     ],
     dimensions: '320 x 320 x 805 mm',
     power: '50W Whisper Quiet Tenang & Senyap',
-    image: '/src/assets/images/coway_air_purifier_1791998277782.jpg'
+    image: cowayAirImg
   },
   {
     id: 'prime-mattress',
@@ -169,7 +206,7 @@ const PRODUCTS: CowayProduct[] = [
     ],
     dimensions: 'Standar Queen / King',
     power: 'Bebas Radiasi Listrik / Zero EMF',
-    image: '/src/assets/images/coway_cody_specialist_1791998277853.jpg'
+    image: cowayCodyImg
   }
 ];
 
@@ -512,9 +549,10 @@ export default function App() {
             <div className="lg:col-span-5 relative">
               <div className="relative rounded-2xl overflow-hidden shadow-xl border border-sky-200 bg-white">
                 <img
-                  src="/src/assets/images/coway_hero_purifier_1791998277313.jpg"
+                  src={cowayHeroImg}
                   alt="Coway Smart Purifier Countertop Water Dispenser"
                   referrerPolicy="no-referrer"
+                  onError={(e) => handleImageError(e, 'water')}
                   className="w-full h-80 sm:h-96 object-cover object-center"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent flex flex-col justify-end p-5 sm:p-6 text-white">
@@ -552,8 +590,9 @@ export default function App() {
               {/* Floating Verified Seller Card */}
               <div className="absolute -bottom-6 -left-4 sm:left-4 bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-lg border border-sky-100 flex items-center gap-3 max-w-xs">
                 <img
-                  src="/src/assets/images/coway_cody_specialist_1791998277853.jpg"
+                  src={cowayCodyImg}
                   alt="Coway Health Planner Moniko"
+                  onError={(e) => handleImageError(e, 'specialist')}
                   className="w-12 h-12 rounded-lg object-cover border border-sky-200 shrink-0"
                 />
                 <div>
@@ -840,6 +879,7 @@ export default function App() {
                         src={product.image}
                         alt={product.name}
                         referrerPolicy="no-referrer"
+                        onError={(e) => handleImageError(e, product.category === 'air' ? 'air' : product.category === 'living' ? 'specialist' : 'water')}
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                       />
                       <div className="absolute top-3 left-3 flex items-center gap-1.5">
@@ -1153,6 +1193,7 @@ export default function App() {
                     <img
                       src={selectedProduct.image}
                       alt={selectedProduct.name}
+                      onError={(e) => handleImageError(e, selectedProduct.category === 'air' ? 'air' : selectedProduct.category === 'living' ? 'specialist' : 'water')}
                       className="w-12 h-12 rounded-lg object-cover border border-sky-200"
                     />
                     <div>
@@ -1393,8 +1434,9 @@ export default function App() {
                 </p>
                 <div className="flex items-center gap-2">
                   <img
-                    src="/src/assets/images/coway_cody_specialist_1791998277853.jpg"
+                    src={cowayCodyImg}
                     alt="Seller Cody"
+                    onError={(e) => handleImageError(e, 'specialist')}
                     className="w-9 h-9 rounded-full object-cover border border-sky-300"
                   />
                   <div className="text-xs">
