@@ -31,9 +31,9 @@ import {
 } from 'lucide-react';
 
 // Production-ready static image imports (processed and hashed by Vite)
-import cowayHeroImg from './assets/images/coway_hero_purifier_1791998277313.jpg';
-import cowayAirImg from './assets/images/coway_air_purifier_1791998277782.jpg';
-import cowayCodyImg from './assets/images/coway_cody_specialist_1791998277853.jpg';
+import cowayHeroImg from 'assets/images/coway_hero_purifier_1791998277313.jpg';
+import cowayAirImg from 'assets/images/coway_air_purifier_1791998277782.jpg';
+import cowayCodyImg from 'assets/images/coway_cody_specialist_1791998277853.jpg';
 
 // Graceful fallback handler for Cloud Run container hosting & network resilience
 const handleImageError = (
@@ -43,9 +43,9 @@ const handleImageError = (
   const target = e.currentTarget;
   if (!target.dataset.triedPublic) {
     target.dataset.triedPublic = '1';
-    if (category === 'air') target.src = '/images/coway_air_purifier.jpg';
-    else if (category === 'specialist') target.src = '/images/coway_cody_specialist.jpg';
-    else target.src = '/images/coway_hero_purifier.jpg';
+    if (category === 'air') target.src = 'assets/images/coway_air_purifier.jpg';
+    else if (category === 'specialist') target.src = 'assets/images/coway_cody_specialist.jpg';
+    else target.src = 'assets/images/coway_hero_purifier.jpg';
     return;
   }
   if (!target.dataset.triedAssets) {
