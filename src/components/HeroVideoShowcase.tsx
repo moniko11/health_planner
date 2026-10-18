@@ -1,28 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Play,
   Pause,
   RotateCcw,
-  Volume2,
-  VolumeX,
   Maximize2,
   Sparkles,
   CheckCircle2,
   ArrowRight,
   X,
-  Clock,
   Droplets,
-  Layers,
   Flame,
-  Snowflake,
-  ShieldCheck,
-  Music
+  Snowflake
 } from 'lucide-react';
 
 import cowayNeoKitchenImg from '../assets/images/coway_neo_kitchen_1792265576318.jpg';
 import cowayDispensePourImg from '../assets/images/coway_dispense_pour_1792265590650.jpg';
 import cowayKitchenLifeImg from '../assets/images/coway_kitchen_life_1792265605478.jpg';
-import cowayPromoBgm from '../assets/audio/coway_promo_bgm.mp3';
 
 interface HeroVideoShowcaseProps {
   onSelectProduct: (productId: string) => void;
@@ -87,9 +80,7 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [currentSeconds, setCurrentSeconds] = useState<number>(0);
-  const [isMuted, setIsMuted] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const TOTAL_DURATION = 15; // 15 seconds promotional video showcase
 
@@ -108,86 +99,28 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
         setCurrentSeconds((prev) => {
           const next = prev + 0.1;
           if (next >= TOTAL_DURATION) {
-            // Seamless loop restart
-            if (audioRef.current && !isMuted) {
-              audioRef.current.currentTime = 0;
-            }
-            return 0;
+            return 0; // Seamless continuous loop
           }
           return next;
         });
       }, 100);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, isMuted]);
-
-  // Synchronize audio playback with isPlaying and isMuted states
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (!isMuted && isPlaying) {
-      if (Math.abs(audio.currentTime - (currentSeconds % TOTAL_DURATION)) > 0.5) {
-        audio.currentTime = currentSeconds % TOTAL_DURATION;
-      }
-      audio.play().catch(() => {
-        // Browser autoplay policy might require direct interaction
-      });
-    } else {
-      audio.pause();
-    }
-  }, [isPlaying, isMuted]);
+  }, [isPlaying]);
 
   const handleTogglePlay = () => {
-    setIsPlaying((prev) => {
-      const nextPlaying = !prev;
-      if (audioRef.current) {
-        if (nextPlaying && !isMuted) {
-          audioRef.current.play().catch(() => {});
-        } else {
-          audioRef.current.pause();
-        }
-      }
-      return nextPlaying;
-    });
-  };
-
-  const handleToggleMute = () => {
-    setIsMuted((prev) => {
-      const nextMuted = !prev;
-      if (audioRef.current) {
-        if (!nextMuted) {
-          audioRef.current.currentTime = currentSeconds % TOTAL_DURATION;
-          audioRef.current.play().catch(() => {});
-        } else {
-          audioRef.current.pause();
-        }
-      }
-      return nextMuted;
-    });
+    setIsPlaying((prev) => !prev);
   };
 
   const handleSeekScene = (sceneIndex: number) => {
     const targetSeconds = sceneIndex * 5;
     setCurrentSeconds(targetSeconds);
     setIsPlaying(true);
-    if (audioRef.current) {
-      audioRef.current.currentTime = targetSeconds;
-      if (!isMuted) {
-        audioRef.current.play().catch(() => {});
-      }
-    }
   };
 
   const handleRestart = () => {
     setCurrentSeconds(0);
     setIsPlaying(true);
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      if (!isMuted) {
-        audioRef.current.play().catch(() => {});
-      }
-    }
   };
 
   // Image fallback handler
@@ -210,21 +143,6 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
 
   return (
     <>
-      {/* Background Music Audio Element */}
-      <audio
-        ref={audioRef}
-        src={cowayPromoBgm}
-        preload="auto"
-        loop
-        onError={(e) => {
-          const el = e.currentTarget;
-          if (!el.dataset.triedPublic) {
-            el.dataset.triedPublic = '1';
-            el.src = '/audio/coway_promo_bgm.mp3';
-          }
-        }}
-      />
-
       <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-sky-300/80 bg-slate-950 group select-none">
         {/* Main 16:9 Video Canvas Frame */}
         <div className="relative w-full aspect-16/10 sm:aspect-16/11 overflow-hidden bg-slate-900">
@@ -263,36 +181,6 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Catchy Music Toggle Button */}
-              <button
-                type="button"
-                onClick={handleToggleMute}
-                title={isMuted ? 'Nyalakan Musik Video Menarik' : 'Matikan Musik Video'}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs backdrop-blur-md transition-all cursor-pointer ${
-                  !isMuted
-                    ? 'bg-emerald-500/25 hover:bg-emerald-500/35 border-emerald-400/60 text-emerald-300 shadow-lg shadow-emerald-500/20'
-                    : 'bg-black/60 hover:bg-black/80 border-white/20 text-slate-200 hover:text-white'
-                }`}
-              >
-                {!isMuted ? (
-                  <>
-                    <Volume2 className="w-4 h-4 text-emerald-400 animate-pulse" />
-                    <span className="hidden sm:inline font-semibold">Musik ON</span>
-                    {/* Animated Music Equalizer Bars */}
-                    <span className="flex items-end gap-0.5 h-3 ml-0.5">
-                      <span className="w-0.5 bg-emerald-400 h-2 animate-bounce" />
-                      <span className="w-0.5 bg-emerald-300 h-3 animate-bounce [animation-delay:150ms]" />
-                      <span className="w-0.5 bg-emerald-400 h-1.5 animate-bounce [animation-delay:300ms]" />
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <VolumeX className="w-4 h-4 text-slate-300" />
-                    <span className="hidden sm:inline text-slate-300 font-medium">Nyalakan Musik</span>
-                  </>
-                )}
-              </button>
-
               {/* Theater Fullscreen Expand */}
               <button
                 type="button"
@@ -304,20 +192,6 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
               </button>
             </div>
           </div>
-
-          {/* Floating 'Nyalakan Musik' Pill (When Muted and Playing) */}
-          {isMuted && isPlaying && (
-            <div className="absolute top-16 right-4 z-30 animate-pulse">
-              <button
-                type="button"
-                onClick={handleToggleMute}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-500/90 to-blue-600/90 hover:from-sky-500 hover:to-blue-500 text-white text-[11px] font-semibold shadow-lg backdrop-blur-md border border-white/30 cursor-pointer transition-transform hover:scale-105"
-              >
-                <Music className="w-3.5 h-3.5 text-white" />
-                <span>Nyalakan Musik 🎵</span>
-              </button>
-            </div>
-          )}
 
           {/* Central Play/Pause Floating Action Button */}
           <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
@@ -563,15 +437,11 @@ export const HeroVideoShowcase: React.FC<HeroVideoShowcaseProps> = ({
                   </div>
                   <button
                     type="button"
-                    onClick={handleToggleMute}
-                    className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
-                      !isMuted
-                        ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300'
-                        : 'bg-white/10 border-white/15 text-slate-300 hover:text-white'
-                    }`}
+                    onClick={handleTogglePlay}
+                    className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white cursor-pointer px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 transition-colors"
                   >
-                    {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emerald-400 animate-pulse" />}
-                    <span>{isMuted ? 'Nyalakan Musik' : 'Musik ON 🎵'}</span>
+                    {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                    <span>{isPlaying ? 'Jeda' : 'Putar'}</span>
                   </button>
                 </div>
               </div>

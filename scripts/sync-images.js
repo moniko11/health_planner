@@ -7,7 +7,6 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
 const srcImagesDir = path.join(rootDir, 'src', 'assets', 'images');
-const srcAudioDir = path.join(rootDir, 'src', 'assets', 'audio');
 
 // Target directories where assets might be fetched from in production / Cloud Run
 const targetImageDirs = [
@@ -21,17 +20,8 @@ const targetImageDirs = [
   path.join(rootDir, 'dist', 'src', 'assets', 'images'),
 ];
 
-const targetAudioDirs = [
-  path.join(rootDir, 'public', 'audio'),
-  path.join(rootDir, 'dist', 'audio'),
-  path.join(rootDir, 'dist', 'assets')
-];
-
 // Ensure all target directories exist
 for (const dir of targetImageDirs) {
-  fs.mkdirSync(dir, { recursive: true });
-}
-for (const dir of targetAudioDirs) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
@@ -59,16 +49,4 @@ if (fs.existsSync(srcImagesDir)) {
     }
   }
   console.log(`[sync-images] Successfully synced ${files.length} images across all static and dist directories.`);
-}
-
-// 2. Sync audio
-if (fs.existsSync(srcAudioDir)) {
-  const audioFiles = fs.readdirSync(srcAudioDir);
-  for (const afile of audioFiles) {
-    const srcAudio = path.join(srcAudioDir, afile);
-    for (const adir of targetAudioDirs) {
-      fs.copyFileSync(srcAudio, path.join(adir, afile));
-    }
-  }
-  console.log(`[sync-images] Successfully synced audio files across public and dist audio directories.`);
 }
