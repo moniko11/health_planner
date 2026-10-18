@@ -84,39 +84,37 @@ app.use((req, res, next) => {
   next();
 });
 
-// 2. Primary static handler: dist directory contains bundled React code & assets
-app.use(express.static(path.join(__dirname, 'dist'), {
+// 2. Primary static handler: dist directory contains bundled React code & assets (both for root / and /store subpath)
+const staticOptions = {
   maxAge: '1d',
-  setHeaders: (res, filePath) => {
-    if (/\.(jpg|jpeg|png|webp|svg|gif|ico|mp3|wav|ogg)$/i.test(filePath)) {
+  setHeaders: (res: express.Response, filePath: string) => {
+    if (/\.(jpg|jpeg|png|webp|svg|gif|ico|woff2?|ttf)$/i.test(filePath)) {
       res.setHeader('Cache-Control', 'public, max-age=86400');
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     }
   }
-}));
+};
 
-// 3. Audio endpoints
-app.use('/audio', express.static(path.join(__dirname, 'dist/audio'), { maxAge: '1d' }));
-app.use('/audio', express.static(path.join(__dirname, 'public/audio'), { maxAge: '1d' }));
-app.use('/audio', express.static(path.join(__dirname, 'src/assets/audio'), { maxAge: '1d' }));
+app.use('/store', express.static(path.join(__dirname, 'dist'), staticOptions));
+app.use(express.static(path.join(__dirname, 'dist'), staticOptions));
 
-// 4. Static image subdirectories
-app.use('/images', express.static(path.join(__dirname, 'dist/images'), { maxAge: '1d' }));
-app.use('/images', express.static(path.join(__dirname, 'public/images'), { maxAge: '1d' }));
-app.use('/assets', express.static(path.join(__dirname, 'dist/assets'), { maxAge: '1d' }));
-app.use('/assets/images', express.static(path.join(__dirname, 'dist/assets/images'), { maxAge: '1d' }));
-app.use('/assets/images', express.static(path.join(__dirname, 'public/assets/images'), { maxAge: '1d' }));
-app.use('/assets/images', express.static(path.join(__dirname, 'public/images'), { maxAge: '1d' }));
-app.use('/src/assets/images', express.static(path.join(__dirname, 'src/assets/images'), { maxAge: '1d' }));
-app.use('/src/assets/images', express.static(path.join(__dirname, 'dist/images'), { maxAge: '1d' }));
+// 3. Static image and asset subdirectories for both root and /store
+app.use(['/store/images', '/images'], express.static(path.join(__dirname, 'dist/images'), staticOptions));
+app.use(['/store/images', '/images'], express.static(path.join(__dirname, 'public/images'), staticOptions));
+app.use(['/store/assets', '/assets'], express.static(path.join(__dirname, 'dist/assets'), staticOptions));
+app.use(['/store/assets/images', '/assets/images'], express.static(path.join(__dirname, 'dist/assets/images'), staticOptions));
+app.use(['/store/assets/images', '/assets/images'], express.static(path.join(__dirname, 'public/assets/images'), staticOptions));
+app.use(['/store/assets/images', '/assets/images'], express.static(path.join(__dirname, 'public/images'), staticOptions));
+app.use(['/store/src/assets/images', '/src/assets/images'], express.static(path.join(__dirname, 'src/assets/images'), staticOptions));
+app.use(['/store/src/assets/images', '/src/assets/images'], express.static(path.join(__dirname, 'dist/images'), staticOptions));
 
 // Health check endpoint for Google Cloud Run
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'healthy', app: 'coway-health-app' });
+  res.status(200).json({ status: 'healthy', app: 'coway-health-app', domain: 'www.captainactservices.my.id/store' });
 });
 
-// Single Page Application (SPA) fallback
-app.get('*', (req, res) => {
+// Single Page Application (SPA) fallback for /store and root routes
+app.get(['/store', '/store/*', '*'], (req, res) => {
   // If static asset was not found, return 404 rather than HTML
   if (/\.(css|js|json|woff2?|ttf|map)$/i.test(req.path)) {
     res.status(404).send('Asset not found');
